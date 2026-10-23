@@ -1,6 +1,7 @@
 
 'use strict';
 
+// ตารางอัตรา PPI เดิม
 const male = [
   [1.22,2.11,2.39,3.39,4.12,4.43],
   [1.26,2.24,2.55,3.62,4.40,4.67],
@@ -24,13 +25,18 @@ const female = [
 ];
 
 const medical = [65,65,120,180,180,180];
+const terms = [12,18,24,30,36,48,60];
 
 const $ = id => document.getElementById(id);
-const fmt = (n,d=2) => Number(n).toLocaleString('en-US',{
-  minimumFractionDigits:d,
-  maximumFractionDigits:d
-});
+
+const fmt = (n,d=2) =>
+  Number(n).toLocaleString('en-US',{
+    minimumFractionDigits:d,
+    maximumFractionDigits:d
+  });
+
 const parse = s => Number(String(s).replaceAll(',',''));
+
 const valid = s =>
   s !== '' &&
   s !== '.' &&
@@ -47,56 +53,60 @@ const text = {};
 function display(id,value,lines) {
   $(id+'-result').textContent = value;
   $(id+'-details').innerHTML = lines.join('');
+
   text[id] = value === '—' ? '' :
-    lines.map(s => s.replace(/<[^>]*>/g,' ')
-      .replace(/\s+/g,' ').trim()).join('\n') +
-    '\nผลลัพธ์: ' + value;
+    lines.map(s =>
+      s.replace(/<[^>]*>/g,' ')
+       .replace(/\s+/g,' ')
+       .trim()
+    ).join('\n') + '\nผลลัพธ์: ' + value;
 }
 
 function calc() {
-  // สินเชื่อ: ใช้จำนวนเดือนจริง
+  // 1. สินเชื่อ: เลือกจำนวนเดือน
   const lp = get('loan-principal');
   const lr = get('loan-rate');
-  const months = num('loan-years');
-  const years = months / 12;
+  const lm = num('loan-years');
+  const ly = lm / 12;
 
   $('loan-months').textContent =
-    `จำนวนงวดอัตโนมัติ: ${months} เดือน`;
+    `จำนวนงวดอัตโนมัติ: ${lm} เดือน`;
 
-  if(valid(lp) && valid(lr) && months > 0) {
+  if(valid(lp) && valid(lr) && terms.includes(lm)) {
     const p = parse(lp);
     const r = parse(lr);
-    const interest = p * r / 100 * years;
+    const interest = p * r / 100 * ly;
     const total = p + interest;
-    const raw = total / months;
+    const raw = total / lm;
     const rounded = Math.ceil(raw - 1e-10);
 
     display('loan',fmt(rounded,0)+' บาท',[
       row('ยอดจัด',fmt(p)+' บาท'),
       row('ดอกเบี้ยรวม',fmt(interest)+' บาท'),
       row('ยอดรวมเงินต้นและดอกเบี้ย',fmt(total)+' บาท'),
-      row('จำนวนงวด',months+' เดือน'),
+      row('จำนวนงวด',lm+' เดือน'),
       row('ค่างวดก่อนปัดเศษ',fmt(raw,6)+' บาท')
     ]);
   } else {
     display('loan','—',[]);
   }
 
-  // ค่าคอมร้าน: สูตรเดิม
+  // 2. ค่าคอมร้าน: เปลี่ยนมาเลือกจำนวนเดือน
   const cp = get('com-principal');
   const cr = get('com-rate');
-  const cy = num('com-years');
+  const cm = num('com-years');
+  const cy = cm / 12;
 
-  if(valid(cp) && valid(cr) && cy > 0) {
+  if(valid(cp) && valid(cr) && terms.includes(cm)) {
     const p = parse(cp);
     const r = parse(cr);
     const interest = p * r / 100 * cy;
-    const commission = interest * .08;
+    const commission = interest * 0.08;
 
     display('commission',fmt(commission)+' บาท',[
       row('ยอดจัดสินเชื่อ',fmt(p)+' บาท'),
       row('ดอกเบี้ยต่อปี',fmt(r)+'%'),
-      row('ระยะเวลาผ่อน',`${cy} ปี (${cy*12} งวด)`),
+      row('ระยะเวลาผ่อน',cm+' เดือน'),
       row('ดอกเบี้ยรวม',fmt(interest)+' บาท'),
       row('อัตราค่าคอมมิชชัน','8%'),
       row('ค่าคอมมิชชันรวม',fmt(commission)+' บาท')
@@ -105,11 +115,11 @@ function calc() {
     display('commission','—',[]);
   }
 
-  // ประกัน PPI: ตารางและสูตรเดิม
+  // 3. PPI: คงสูตรเดิม
   const pay = get('ppi-payment');
   const ageStr = get('ppi-age');
   const age = Number(ageStr);
-  const ppiYears = num('ppi-years');
+  const years = num('ppi-years');
 
   let error = '';
 
@@ -145,16 +155,16 @@ function calc() {
     age <= 60 ? 6 : 7;
 
   const sex = get('ppi-sex');
-  const rate = (sex === 'male' ? male : female)[idx][ppiYears-1];
+  const rate = (sex === 'male' ? male : female)[idx][years-1];
   const base = parse(pay) * rate / 100;
-  const med = medical[ppiYears-1];
+  const med = medical[years-1];
   const total = base + med;
   const rounded = Math.round(total);
 
   display('ppi',fmt(rounded,0)+' บาท',[
     row('ช่วงอายุอ้างอิง',ranges[idx]+' ปี'),
     row('เพศ',sex === 'male' ? 'ชาย' : 'หญิง'),
-    row('ระยะเวลาสินเชื่อ',`${ppiYears} ปี (${ppiYears*12} งวด)`),
+    row('ระยะเวลาสินเชื่อ',`${years} ปี (${years*12} งวด)`),
     row('อัตราเบี้ยประกันหลัก',fmt(rate)+'%'),
     row('เบี้ยประกันหลัก',fmt(base)+' บาท'),
     row('ค่ารักษาพยาบาลอุบัติเหตุ',fmt(med)+' บาท'),
@@ -165,6 +175,7 @@ function calc() {
 
 function sanitize(el) {
   const decimal = el.id.endsWith('-rate');
+
   let v = el.value.replace(
     decimal ? /[^\d.]/g : /[^\d]/g,''
   );
@@ -173,7 +184,7 @@ function sanitize(el) {
     const dot = v.indexOf('.');
     if(dot >= 0) {
       v = v.slice(0,dot+1) +
-        v.slice(dot+1).replaceAll('.','');
+          v.slice(dot+1).replaceAll('.','');
     }
   }
 
@@ -181,38 +192,41 @@ function sanitize(el) {
   if(!decimal && v) el.value = fmt(Number(v),0);
 }
 
-// ตัวเลือกสินเชื่อใหม่: 12 ถึง 60 เดือน
-const loanTerms = [12,18,24,30,36,48,60];
-for(const months of loanTerms) {
-  const opt = document.createElement('option');
-  opt.value = String(months);
-  opt.textContent = `${months} เดือน`;
-  $('loan-years').append(opt);
-}
-$('loan-years').value = '36';
+// สร้างตัวเลือกเดือนให้สินเชื่อและค่าคอมร้าน
+for(const id of ['loan-years','com-years']) {
+  $(id).innerHTML = '';
 
-// เปลี่ยนหัวข้อบนหน้าสินเชื่ออัตโนมัติ
-const loanLabel = document.querySelector(
-  'label[for="loan-years"]'
-);
-if(loanLabel) {
-  loanLabel.textContent = 'ระยะเวลาผ่อน (เดือน)';
-}
-
-// ค่าคอมร้านและ PPI คงตัวเลือกปีเดิม
-for(const [id,max] of [
-  ['com-years',5],
-  ['ppi-years',6]
-]) {
-  for(let i=1;i<=max;i++) {
+  for(const months of terms) {
     const opt = document.createElement('option');
-    opt.value = String(i);
-    opt.textContent = `${i} ปี (${i*12} งวด)`;
+    opt.value = String(months);
+    opt.textContent = `${months} เดือน`;
     $(id).append(opt);
   }
-  $(id).value = '3';
+
+  $(id).value = '36';
+
+  const label = document.querySelector(
+    `label[for="${id}"]`
+  );
+
+  if(label) {
+    label.textContent = 'ระยะเวลาผ่อน (เดือน)';
+  }
 }
 
+// PPI ยังคงเลือก 1-6 ปี
+$('ppi-years').innerHTML = '';
+
+for(let i=1;i<=6;i++) {
+  const opt = document.createElement('option');
+  opt.value = String(i);
+  opt.textContent = `${i} ปี (${i*12} งวด)`;
+  $('ppi-years').append(opt);
+}
+
+$('ppi-years').value = '3';
+
+// คำนวณใหม่เมื่อเปลี่ยนข้อมูล
 const inputs = document.querySelectorAll('input,select');
 
 for(const el of inputs) {
@@ -220,20 +234,24 @@ for(const el of inputs) {
     if(el.tagName === 'INPUT') sanitize(el);
     calc();
   });
+
   el.addEventListener('change',calc);
 }
 
+// เปลี่ยนแท็บ
 document.querySelectorAll('[data-tab]').forEach(btn =>
   btn.addEventListener('click',() => {
     document.querySelectorAll('[data-tab]').forEach(b =>
       b.classList.toggle('active',b === btn)
     );
+
     document.querySelectorAll('section.panel').forEach(p =>
       p.classList.toggle('hidden',p.id !== btn.dataset.tab)
     );
   })
 );
 
+// คัดลอกผลลัพธ์
 document.querySelectorAll('[data-copy]').forEach(btn =>
   btn.addEventListener('click',async() => {
     const t = text[btn.dataset.copy];
@@ -242,13 +260,17 @@ document.querySelectorAll('[data-copy]').forEach(btn =>
     try {
       await navigator.clipboard.writeText(t);
       btn.textContent = 'คัดลอกแล้ว';
-      setTimeout(() => btn.textContent = 'คัดลอกผล',1400);
+
+      setTimeout(() => {
+        btn.textContent = 'คัดลอกผล';
+      },1400);
     } catch {
       window.prompt('คัดลอกข้อความนี้',t);
     }
   })
 );
 
+// ล้างข้อมูล
 document.querySelectorAll('[data-clear]').forEach(btn =>
   btn.addEventListener('click',() => {
     const id = btn.dataset.clear;
@@ -260,19 +282,24 @@ document.querySelectorAll('[data-clear]').forEach(btn =>
     } else if(id === 'commission') {
       $('com-principal').value = '';
       $('com-rate').value = '';
-      $('com-years').value = '3';
+      $('com-years').value = '36';
     } else {
       $('ppi-payment').value = '';
       $('ppi-age').value = '';
       $('ppi-sex').value = 'male';
       $('ppi-years').value = '3';
     }
+
     calc();
   })
 );
 
 calc();
 
-if('serviceWorker' in navigator && location.protocol !== 'file:') {
+// ลงทะเบียน Service Worker เดิม
+if(
+  'serviceWorker' in navigator &&
+  location.protocol !== 'file:'
+) {
   navigator.serviceWorker.register('./sw.js').catch(() => {});
 }
