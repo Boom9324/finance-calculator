@@ -1,4 +1,6 @@
+
 'use strict';
+
 const male=[
 [1.22,2.11,2.39,3.39,4.12,4.43],
 [1.26,2.24,2.55,3.62,4.40,4.67],
@@ -9,6 +11,7 @@ const male=[
 [3.05,5.91,7.20,9.14,11.83,11.29],
 [4.32,8.58,10.49,13.26,17.11,16.00]
 ];
+
 const female=[
 [.97,1.66,1.88,2.73,3.35,3.74],
 [1,1.72,1.95,2.82,3.46,3.83],
@@ -19,115 +22,419 @@ const female=[
 [2.29,3.94,4.70,5.96,7.71,7.68],
 [3.18,5.67,6.80,8.56,11,10.62]
 ];
+
 const medical=[65,65,120,180,180,180];
+
 const loanTerms=[12,18,24,30,36,48,60];
-const chubbYears={12:1,24:2,36:3,48:4,60:5,72:6};
-const chubbMedical=[40000,40000,55000,90000,90000,90000];
+
+// 18 งวดใช้ตารางประกัน CHUBB 2 ปี
+const chubbYears={
+  12:1,
+  18:2,
+  24:2,
+  36:3,
+  48:4,
+  60:5,
+  72:6
+};
+
+const chubbMedical=[
+  40000,40000,55000,90000,90000,90000
+];
+
 const $=id=>document.getElementById(id);
-const fmt=(n,d=2)=>Number(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+
+const fmt=(n,d=2)=>
+  Number(n).toLocaleString('en-US',{
+    minimumFractionDigits:d,
+    maximumFractionDigits:d
+  });
+
 const parse=s=>Number(String(s).replaceAll(',',''));
-const valid=s=>s!==''&&s!=='.'&&Number.isFinite(parse(s))&&parse(s)>=0;
-const row=(label,value)=>`<div class="line"><span>${label}</span><span>${value}</span></div>`;
+
+const valid=s=>
+  s!==''&&
+  s!=='.'&&
+  Number.isFinite(parse(s))&&
+  parse(s)>=0;
+
+const row=(label,value)=>
+  `<div class="line"><span>${label}</span><span>${value}</span></div>`;
+
 const get=id=>$(id).value;
 const num=id=>parse(get(id));
-const checked=name=>document.querySelector(`input[name="${name}"]:checked`).value;
+
+const checked=name=>
+  document.querySelector(`input[name="${name}"]:checked`).value;
+
 const text={};
+
 function display(id,value,lines){
   $(id+'-result').textContent=value;
   $(id+'-details').innerHTML=lines.join('');
-  text[id]=value==='—'?'':lines.map(s=>s.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim()).join('\n')+'\nผลลัพธ์: '+value;
+
+  text[id]=value==='—'?'':lines.map(s=>
+    s.replace(/<[^>]*>/g,' ')
+     .replace(/\s+/g,' ')
+     .trim()
+  ).join('\n')+'\nผลลัพธ์: '+value;
 }
+
 function calc(){
-  const lp=get('loan-principal'),lr=get('loan-rate'),lm=num('loan-years');
-  $('loan-months').textContent=`จำนวนงวดอัตโนมัติ: ${lm} เดือน`;
+
+  // เครื่องคำนวณสินเชื่อ
+  const lp=get('loan-principal');
+  const lr=get('loan-rate');
+  const lm=num('loan-years');
+
+  $('loan-months').textContent=
+    `จำนวนงวดอัตโนมัติ: ${lm} เดือน`;
+
   if(valid(lp)&&valid(lr)&&loanTerms.includes(lm)){
-    const p=parse(lp),r=parse(lr),i=p*r/100*(lm/12),t=p+i,raw=t/lm,rounded=Math.ceil(raw-1e-10);
-    display('loan',fmt(rounded,0)+' บาท',[row('ยอดจัด',fmt(p)+' บาท'),row('ดอกเบี้ยรวม',fmt(i)+' บาท'),row('ยอดรวมเงินต้นและดอกเบี้ย',fmt(t)+' บาท'),row('จำนวนงวด',lm+' เดือน'),row('ค่างวดก่อนปัดเศษ',fmt(raw,6)+' บาท')]);
-  }else display('loan','—',[]);
-  const cp=get('com-principal'),cr=get('com-rate'),cm=num('com-years');
-  if(valid(cp)&&valid(cr)&&loanTerms.includes(cm)){
-    const p=parse(cp),r=parse(cr),i=p*r/100*(cm/12),c=i*.08;
-    display('commission',fmt(c)+' บาท',[row('ยอดจัดสินเชื่อ',fmt(p)+' บาท'),row('ดอกเบี้ยต่อปี',fmt(r)+'%'),row('ระยะเวลาผ่อน',cm+' เดือน'),row('ดอกเบี้ยรวม',fmt(i)+' บาท'),row('อัตราค่าคอมมิชชัน','8%'),row('ค่าคอมมิชชันรวม',fmt(c)+' บาท')]);
-  }else display('commission','—',[]);
-  const pay=get('ppi-payment'),ageStr=get('ppi-age'),age=Number(ageStr),years=num('ppi-years');
-  let error='';
-  if(!valid(pay))error='กรุณากรอกค่างวดรถที่ถูกต้อง';
-  else if(!/^\d+$/.test(ageStr)||!Number.isInteger(age)||age<20||age>65)error='กรุณากรอกอายุเป็นจำนวนเต็มระหว่าง 20–65 ปี';
-  $('ppi-error').textContent=error;
-  if(error)display('ppi','—',[]);
-  else{
-    const ranges=['20','21–30','31–40','41–45','46–50','51–55','56–60','61–65'];
-    const idx=age===20?0:age<=30?1:age<=40?2:age<=45?3:age<=50?4:age<=55?5:age<=60?6:7;
-    const sex=get('ppi-sex'),rate=(sex==='male'?male:female)[idx][years-1];
-    const base=parse(pay)*rate/100,med=medical[years-1],total=base+med,rounded=Math.round(total);
-    display('ppi',fmt(rounded,0)+' บาท',[row('ช่วงอายุอ้างอิง',ranges[idx]+' ปี'),row('เพศ',sex==='male'?'ชาย':'หญิง'),row('ระยะเวลาสินเชื่อ',`${years} ปี (${years*12} งวด)`),row('อัตราเบี้ยประกันหลัก',fmt(rate)+'%'),row('เบี้ยประกันหลัก',fmt(base)+' บาท'),row('ค่ารักษาพยาบาลอุบัติเหตุ',fmt(med)+' บาท'),row('เบี้ยรวมก่อนปัดเศษ',fmt(total)+' บาท'),row('เบี้ยรวมหลังปัดเศษ',fmt(rounded,0)+' บาท')]);
+    const p=parse(lp);
+    const r=parse(lr);
+    const i=p*r/100*(lm/12);
+    const t=p+i;
+    const raw=t/lm;
+    const rounded=Math.ceil(raw-1e-10);
+
+    display('loan',fmt(rounded,0)+' บาท',[
+      row('ยอดจัด',fmt(p)+' บาท'),
+      row('ดอกเบี้ยรวม',fmt(i)+' บาท'),
+      row('ยอดรวมเงินต้นและดอกเบี้ย',fmt(t)+' บาท'),
+      row('จำนวนงวด',lm+' เดือน'),
+      row('ค่างวดก่อนปัดเศษ',fmt(raw,6)+' บาท')
+    ]);
+  }else{
+    display('loan','—',[]);
   }
+
+  // เครื่องคำนวณค่าคอมร้าน
+  const cp=get('com-principal');
+  const cr=get('com-rate');
+  const cm=num('com-years');
+
+  if(valid(cp)&&valid(cr)&&loanTerms.includes(cm)){
+    const p=parse(cp);
+    const r=parse(cr);
+    const i=p*r/100*(cm/12);
+    const c=i*.08;
+
+    display('commission',fmt(c)+' บาท',[
+      row('ยอดจัดสินเชื่อ',fmt(p)+' บาท'),
+      row('ดอกเบี้ยต่อปี',fmt(r)+'%'),
+      row('ระยะเวลาผ่อน',cm+' เดือน'),
+      row('ดอกเบี้ยรวม',fmt(i)+' บาท'),
+      row('อัตราค่าคอมมิชชัน','8%'),
+      row('ค่าคอมมิชชันรวม',fmt(c)+' บาท')
+    ]);
+  }else{
+    display('commission','—',[]);
+  }
+
+  // เครื่องคำนวณเบี้ย PPI เดิม
+  const pay=get('ppi-payment');
+  const ageStr=get('ppi-age');
+  const age=Number(ageStr);
+  const years=num('ppi-years');
+
+  let error='';
+
+  if(!valid(pay)){
+    error='กรุณากรอกค่างวดรถที่ถูกต้อง';
+  }else if(
+    !/^\d+$/.test(ageStr)||
+    !Number.isInteger(age)||
+    age<20||
+    age>65
+  ){
+    error='กรุณากรอกอายุเป็นจำนวนเต็มระหว่าง 20–65 ปี';
+  }
+
+  $('ppi-error').textContent=error;
+
+  if(error){
+    display('ppi','—',[]);
+  }else{
+    const ranges=[
+      '20','21–30','31–40','41–45',
+      '46–50','51–55','56–60','61–65'
+    ];
+
+    const idx=age===20?0:
+      age<=30?1:
+      age<=40?2:
+      age<=45?3:
+      age<=50?4:
+      age<=55?5:
+      age<=60?6:7;
+
+    const sex=get('ppi-sex');
+
+    const rate=
+      (sex==='male'?male:female)[idx][years-1];
+
+    const base=parse(pay)*rate/100;
+    const med=medical[years-1];
+    const total=base+med;
+    const rounded=Math.round(total);
+
+    display('ppi',fmt(rounded,0)+' บาท',[
+      row('ช่วงอายุอ้างอิง',ranges[idx]+' ปี'),
+      row('เพศ',sex==='male'?'ชาย':'หญิง'),
+      row('ระยะเวลาสินเชื่อ',
+        `${years} ปี (${years*12} งวด)`),
+      row('อัตราเบี้ยประกันหลัก',fmt(rate)+'%'),
+      row('เบี้ยประกันหลัก',fmt(base)+' บาท'),
+      row('ค่ารักษาพยาบาลอุบัติเหตุ',
+        fmt(med)+' บาท'),
+      row('เบี้ยรวมก่อนปัดเศษ',fmt(total)+' บาท'),
+      row('เบี้ยรวมหลังปัดเศษ',
+        fmt(rounded,0)+' บาท')
+    ]);
+  }
+
   calcChubb();
 }
+
+// เครื่องคำนวณเงินเพิ่มพิเศษ CHUBB
 function calcChubb(){
-  const payment=get('chubb-payment'),monthsStr=get('chubb-months'),ageStr=get('chubb-age');
-  const months=Number(monthsStr),age=Number(ageStr),years=chubbYears[months];
+
+  const payment=get('chubb-payment');
+  const monthsStr=get('chubb-months');
+  const ageStr=get('chubb-age');
+
+  const months=Number(monthsStr);
+  const age=Number(ageStr);
+
+  const years=chubbYears[months];
+
   let error='';
-  if(!valid(payment))error='กรุณากรอกค่างวดรถเป็นจำนวนเงินที่ถูกต้อง';
-  else if(!/^\d+$/.test(monthsStr)||!Object.hasOwn(chubbYears,months))error='จำนวนงวดต้องเป็น 12, 24, 36, 48, 60 หรือ 72 เดือนเท่านั้น ไม่สามารถจับคู่อัตราสำหรับจำนวนงวดอื่นได้';
-  else if(!/^\d+$/.test(ageStr)||!Number.isInteger(age)||age<20||age>65)error='กรุณากรอกอายุเป็นจำนวนเต็มระหว่าง 20–65 ปี';
-  $('chubb-error').textContent=error;
-  if(error){display('chubb','—',[]);return;}
-  const sex=checked('chubb-sex'),type=checked('chubb-type');
-  let rate=150;
-  if(age>=56&&age<=60&&years===1)rate=sex==='male'?167:153;
-  else if(age>=61){
-    rate=sex==='male'?[202,158,150,150,175,156][years-1]:[175,150,150,150,150,150][years-1];
+
+  if(!valid(payment)){
+    error='กรุณากรอกค่างวดรถเป็นจำนวนเงินที่ถูกต้อง';
+  }else if(
+    !/^\d+$/.test(monthsStr)||
+    !Object.prototype.hasOwnProperty.call(chubbYears,months)
+  ){
+    error='รองรับเฉพาะ 12, 18, 24, 36, 48, 60 หรือ 72 งวด';
+  }else if(
+    !/^\d+$/.test(ageStr)||
+    !Number.isInteger(age)||
+    age<20||
+    age>65
+  ){
+    error='กรุณากรอกอายุเป็นจำนวนเต็มระหว่าง 20–65 ปี';
   }
-  const base=parse(payment)*months,extra=base*rate/100,publicExtra=extra*2;
-  const selected=type==='public'?publicExtra:extra;
+
+  $('chubb-error').textContent=error;
+
+  if(error){
+    display('chubb','—',[]);
+    return;
+  }
+
+  const sex=checked('chubb-sex');
+  const type=checked('chubb-type');
+
+  let rate=150;
+
+  if(age>=56&&age<=60&&years===1){
+    rate=sex==='male'?167:153;
+  }else if(age>=61){
+    rate=sex==='male'
+      ?[202,158,150,150,175,156][years-1]
+      :[175,150,150,150,150,150][years-1];
+  }
+
+  // ทุนประกันใช้จำนวนงวดจริง
+  // เช่น 18 งวด ต้องคูณ 18 ไม่ใช่ 24
+  const base=parse(payment)*months;
+
+  const extra=base*rate/100;
+  const publicExtra=extra*2;
+
+  const selected=
+    type==='public'?publicExtra:extra;
+
+  const periodText=months===18
+    ?'2 ปี (18 งวดใช้ตาราง 2 ปี)'
+    :years+' ปี';
+
   display('chubb',fmt(selected)+' บาท',[
-    row('เพศ / อายุ',(sex==='male'?'ชาย':'หญิง')+' / '+age+' ปี'),
-    row('ค่างวดรถ (ไม่รวม PPI)',fmt(parse(payment))+' บาท'),
-    row('ระยะเวลาประกัน',years+' ปี ('+months+' งวด)'),
-    row('ทุนประกันเริ่มต้น (สมมติ)',fmt(base)+' บาท'),
-    row('อัตราเงินเพิ่มพิเศษ',fmt(rate,0)+'%'),
-    row('เงินเพิ่มพิเศษอุบัติเหตุทั่วไป',fmt(extra)+' บาท'),
-    row('เงินเพิ่มพิเศษอุบัติเหตุสาธารณะ',fmt(publicExtra)+' บาท'),
-    row('วงเงินค่ารักษาพยาบาลสูงสุด',fmt(chubbMedical[years-1],0)+' บาท / อุบัติเหตุ'),
-    row('ประเภทที่เลือก',type==='public'?'อุบัติเหตุสาธารณะ':'อุบัติเหตุทั่วไป')
+    row('เพศ / อายุ',
+      (sex==='male'?'ชาย':'หญิง')+
+      ' / '+age+' ปี'),
+
+    row('ค่างวดรถ (ไม่รวม PPI)',
+      fmt(parse(payment))+' บาท'),
+
+    row('ระยะเวลาผ่อนจริง',
+      months+' งวด'),
+
+    row('ตารางประกันที่ใช้',
+      periodText),
+
+    row('ทุนประกันเริ่มต้น (สมมติ)',
+      fmt(base)+' บาท'),
+
+    row('อัตราเงินเพิ่มพิเศษ',
+      fmt(rate,0)+'%'),
+
+    row('เงินเพิ่มพิเศษอุบัติเหตุทั่วไป',
+      fmt(extra)+' บาท'),
+
+    row('เงินเพิ่มพิเศษอุบัติเหตุสาธารณะ',
+      fmt(publicExtra)+' บาท'),
+
+    row('วงเงินค่ารักษาพยาบาลสูงสุด',
+      fmt(chubbMedical[years-1],0)+
+      ' บาท / อุบัติเหตุ'),
+
+    row('ประเภทที่เลือก',
+      type==='public'
+        ?'อุบัติเหตุสาธารณะ'
+        :'อุบัติเหตุทั่วไป')
   ]);
 }
+
 function sanitize(el){
   const decimal=el.id.endsWith('-rate');
-  let v=el.value.replace(decimal? /[^\d.]/g:/[^\d]/g,'');
-  if(decimal){const dot=v.indexOf('.');if(dot>=0)v=v.slice(0,dot+1)+v.slice(dot+1).replaceAll('.','');}
+
+  let v=el.value.replace(
+    decimal?/[^\d.]/g:/[^\d]/g,''
+  );
+
+  if(decimal){
+    const dot=v.indexOf('.');
+    if(dot>=0){
+      v=v.slice(0,dot+1)+
+        v.slice(dot+1).replaceAll('.','');
+    }
+  }
+
   if(v!==el.value)el.value=v;
   if(!decimal&&v)el.value=fmt(Number(v),0);
 }
+
+// ตัวเลือกเดือนของสินเชื่อและค่าคอมร้าน
 for(const id of ['loan-years','com-years']){
   $(id).innerHTML='';
-  for(const months of loanTerms){const opt=document.createElement('option');opt.value=String(months);opt.textContent=months+' เดือน';$(id).append(opt);}
+
+  for(const months of loanTerms){
+    const opt=document.createElement('option');
+    opt.value=String(months);
+    opt.textContent=months+' เดือน';
+    $(id).append(opt);
+  }
+
   $(id).value='36';
 }
+
+// ตัวเลือกปีของเบี้ย PPI เดิม
 $('ppi-years').innerHTML='';
-for(let i=1;i<=6;i++){const opt=document.createElement('option');opt.value=String(i);opt.textContent=`${i} ปี (${i*12} งวด)`;$('ppi-years').append(opt);}
+
+for(let i=1;i<=6;i++){
+  const opt=document.createElement('option');
+  opt.value=String(i);
+  opt.textContent=`${i} ปี (${i*12} งวด)`;
+  $('ppi-years').append(opt);
+}
+
 $('ppi-years').value='3';
+
+// คำนวณทันทีเมื่อข้อมูลเปลี่ยน
 for(const el of document.querySelectorAll('input,select')){
-  el.addEventListener('input',()=>{if(el.tagName==='INPUT'&&el.type!=='radio')sanitize(el);calc();});
+  el.addEventListener('input',()=>{
+    if(el.tagName==='INPUT'&&el.type!=='radio'){
+      sanitize(el);
+    }
+    calc();
+  });
+
   el.addEventListener('change',calc);
 }
-document.querySelectorAll('[data-tab]').forEach(btn=>btn.addEventListener('click',()=>{
-  document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b===btn));
-  document.querySelectorAll('section.panel').forEach(p=>p.classList.toggle('hidden',p.id!==btn.dataset.tab));
-}));
-document.querySelectorAll('[data-copy]').forEach(btn=>btn.addEventListener('click',async()=>{
-  const t=text[btn.dataset.copy];if(!t)return;
-  try{await navigator.clipboard.writeText(t);btn.textContent='คัดลอกแล้ว';setTimeout(()=>btn.textContent='คัดลอกผล',1400);}
-  catch{window.prompt('คัดลอกข้อความนี้',t);}
-}));
-document.querySelectorAll('[data-clear]').forEach(btn=>btn.addEventListener('click',()=>{
-  const id=btn.dataset.clear;
-  if(id==='loan'){$('loan-principal').value='';$('loan-rate').value='';$('loan-years').value='36';}
-  else if(id==='commission'){$('com-principal').value='';$('com-rate').value='';$('com-years').value='36';}
-  else if(id==='ppi'){$('ppi-payment').value='';$('ppi-age').value='';$('ppi-sex').value='male';$('ppi-years').value='3';}
-  else{$('chubb-payment').value='';$('chubb-months').value='36';$('chubb-age').value='';document.querySelector('input[name="chubb-sex"][value="male"]').checked=true;document.querySelector('input[name="chubb-type"][value="general"]').checked=true;}
-  calc();
-}));
+
+// สลับแท็บ
+document.querySelectorAll('[data-tab]').forEach(btn=>
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('[data-tab]').forEach(b=>
+      b.classList.toggle('active',b===btn)
+    );
+
+    document.querySelectorAll('section.panel').forEach(p=>
+      p.classList.toggle(
+        'hidden',
+        p.id!==btn.dataset.tab
+      )
+    );
+  })
+);
+
+// คัดลอกผลลัพธ์
+document.querySelectorAll('[data-copy]').forEach(btn=>
+  btn.addEventListener('click',async()=>{
+    const t=text[btn.dataset.copy];
+    if(!t)return;
+
+    try{
+      await navigator.clipboard.writeText(t);
+      btn.textContent='คัดลอกแล้ว';
+
+      setTimeout(()=>{
+        btn.textContent='คัดลอกผล';
+      },1400);
+    }catch{
+      window.prompt('คัดลอกข้อความนี้',t);
+    }
+  })
+);
+
+// ล้างข้อมูล
+document.querySelectorAll('[data-clear]').forEach(btn=>
+  btn.addEventListener('click',()=>{
+    const id=btn.dataset.clear;
+
+    if(id==='loan'){
+      $('loan-principal').value='';
+      $('loan-rate').value='';
+      $('loan-years').value='36';
+
+    }else if(id==='commission'){
+      $('com-principal').value='';
+      $('com-rate').value='';
+      $('com-years').value='36';
+
+    }else if(id==='ppi'){
+      $('ppi-payment').value='';
+      $('ppi-age').value='';
+      $('ppi-sex').value='male';
+      $('ppi-years').value='3';
+
+    }else{
+      $('chubb-payment').value='';
+      $('chubb-months').value='36';
+      $('chubb-age').value='';
+
+      document.querySelector(
+        'input[name="chubb-sex"][value="male"]'
+      ).checked=true;
+
+      document.querySelector(
+        'input[name="chubb-type"][value="general"]'
+      ).checked=true;
+    }
+
+    calc();
+  })
+);
+
 calc();
-if('serviceWorker'in navigator&&location.protocol!=='file:')navigator.serviceWorker.register('./sw.js').catch(()=>{});
+
+if(
+  'serviceWorker' in navigator&&
+  location.protocol!=='file:'
+){
+  navigator.serviceWorker.register('./sw.js')
+    .catch(()=>{});
+}
