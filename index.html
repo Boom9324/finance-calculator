@@ -1,69 +1,364 @@
+
 <!doctype html>
 <html lang="th">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0c233b">
-<meta name="description" content="คำนวณค่างวดสินเชื่อ ค่าคอมร้าน เบี้ย PPI และเงินเพิ่มพิเศษ CHUBB">
+<meta name="description" content="คำนวณสินเชื่อ ค่าคอมร้าน เบี้ย PPI และเงินเพิ่มพิเศษ CHUBB">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <title>Finance Calculator</title>
 <style>
-:root{font-family:system-ui,'Noto Sans Thai',sans-serif;color:#12283b;background:#eef3f8}*{box-sizing:border-box}body{margin:0}header{background:#0c233b;color:white;padding:24px 18px 18px}header h1{font-size:22px;margin:0 0 5px}header p{margin:0;color:#c5d7e8;font-size:13px}.wrap{max-width:560px;margin:auto;padding:0 14px 35px}.tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:14px 0}.tabs button{border:1px solid #d7e1e9;background:white;padding:12px 4px;border-radius:12px;color:#345;cursor:pointer;font-weight:650;font:inherit;font-size:14px}.tabs button.active{background:#0c496c;color:white;border-color:#0c496c}.panel{background:white;border-radius:17px;padding:20px 16px;box-shadow:0 3px 18px #0c233b12}.panel h2{font-size:19px;margin:0 0 15px}label{display:block;font-size:13px;font-weight:650;margin:14px 0 6px}input,select{width:100%;font:inherit;border:1px solid #ccd8e3;border-radius:10px;padding:13px;background:white;color:#12283b;outline-color:#167b9b}input:focus,select:focus{border-color:#167b9b}.hint{font-size:12px;color:#617388;margin-top:5px}.result{background:#edf8f0;border-radius:14px;text-align:center;margin:20px 0;padding:18px 8px}.result small{display:block;color:#355d42}.result strong{display:block;color:#14733e;font-size:29px;margin-top:6px;overflow-wrap:anywhere}.line{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid #eef1f5;padding:10px 0;font-size:13px}.line span:last-child{font-weight:650;text-align:right}.actions{display:flex;gap:10px;margin-top:20px}.actions button{flex:1;padding:13px 6px;border-radius:10px;border:1px solid #cbd6df;background:white;font-weight:700;cursor:pointer}.actions button:first-child{background:#0c496c;color:white;border-color:#0c496c}.error{color:#ad2935;font-size:13px;margin:8px 0}.hidden{display:none}footer{font-size:12px;color:#657789;padding:15px 3px;line-height:1.6}.note{background:#fff8e7;padding:10px;border-radius:9px;font-size:12px;color:#775315;margin-top:12px;line-height:1.6}.secondary-result{background:#f1f5fa;border-radius:12px;padding:12px 14px;margin-top:10px}.secondary-result .line:last-child{border:0}.secondary-result h3{font-size:14px;margin:0 0 5px}.segmented{display:grid;grid-template-columns:1fr 1fr;gap:8px}.segmented label{margin:0;border:1px solid #ccd8e3;border-radius:10px;padding:12px 10px;cursor:pointer;text-align:center;font-size:14px}.segmented label:has(input:checked){background:#e7f4fa;border-color:#0c496c;color:#0c496c}.segmented input{width:auto;margin-right:5px;accent-color:#0c496c}.chubb-result{background:#e8f3ff}.chubb-result small{color:#335978}.chubb-result strong{color:#0c496c}
+:root{
+  font-family:system-ui,'Noto Sans Thai',sans-serif;
+  color:#12283b;
+  background:#eef3f8
+}
+*{box-sizing:border-box}
+body{margin:0}
+header{
+  background:#0c233b;
+  color:white;
+  padding:24px 18px 18px
+}
+header h1{font-size:22px;margin:0 0 5px}
+header p{margin:0;color:#c5d7e8;font-size:13px}
+.wrap{max-width:560px;margin:auto;padding:0 14px 35px}
+.tabs{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:7px;
+  margin:14px 0
+}
+.tabs button{
+  border:1px solid #d7e1e9;
+  background:white;
+  padding:12px 4px;
+  border-radius:12px;
+  color:#345;
+  cursor:pointer;
+  font-weight:650;
+  font-size:14px
+}
+.tabs button.active{
+  background:#0c496c;
+  color:white;
+  border-color:#0c496c
+}
+.panel{
+  background:white;
+  border-radius:17px;
+  padding:20px 16px;
+  box-shadow:0 3px 18px #0c233b12
+}
+.panel h2{font-size:19px;margin:0 0 15px}
+label{
+  display:block;
+  font-size:13px;
+  font-weight:650;
+  margin:14px 0 6px
+}
+input,select{
+  width:100%;
+  font:inherit;
+  border:1px solid #ccd8e3;
+  border-radius:10px;
+  padding:13px;
+  background:white;
+  color:#12283b;
+  outline-color:#167b9b
+}
+input:focus,select:focus{border-color:#167b9b}
+.hint{
+  font-size:12px;
+  color:#617388;
+  margin-top:5px
+}
+.result{
+  background:#edf8f0;
+  border-radius:14px;
+  text-align:center;
+  margin:20px 0;
+  padding:18px 8px
+}
+.result small{
+  display:block;
+  color:#355d42
+}
+.result strong{
+  display:block;
+  color:#14733e;
+  font-size:29px;
+  margin-top:6px;
+  overflow-wrap:anywhere
+}
+.line{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  border-bottom:1px solid #eef1f5;
+  padding:10px 0;
+  font-size:13px
+}
+.line span:last-child{
+  font-weight:650;
+  text-align:right
+}
+.actions{
+  display:flex;
+  gap:10px;
+  margin-top:20px
+}
+.actions button{
+  flex:1;
+  padding:13px 6px;
+  border-radius:10px;
+  border:1px solid #cbd6df;
+  background:white;
+  font-weight:700;
+  cursor:pointer
+}
+.actions button:first-child{
+  background:#0c496c;
+  color:white;
+  border-color:#0c496c
+}
+.error{
+  color:#ad2935;
+  font-size:13px;
+  margin:8px 0
+}
+.hidden{display:none}
+footer{
+  font-size:12px;
+  color:#657789;
+  padding:15px 3px;
+  line-height:1.6
+}
+.note{
+  background:#fff8e7;
+  padding:10px;
+  border-radius:9px;
+  font-size:12px;
+  color:#775315;
+  margin-top:12px;
+  line-height:1.6
+}
+.segmented{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px
+}
+.segmented label{
+  margin:0;
+  border:1px solid #ccd8e3;
+  border-radius:10px;
+  padding:12px 10px;
+  cursor:pointer;
+  text-align:center;
+  font-size:14px
+}
+.segmented label:has(input:checked){
+  background:#e7f4fa;
+  border-color:#0c496c;
+  color:#0c496c
+}
+.segmented input{
+  width:auto;
+  margin-right:5px;
+  accent-color:#0c496c
+}
+.chubb-result{background:#e8f3ff}
+.chubb-result small{color:#335978}
+.chubb-result strong{color:#0c496c}
 </style>
 </head>
+
 <body>
-<header><div class="wrap" style="padding:0"><h1>Finance Calculator</h1><p>สินเชื่อ · ค่าคอมร้าน · PPI · CHUBB</p></div></header>
+<header>
+  <div class="wrap" style="padding:0">
+    <h1>Finance Calculator</h1>
+    <p>สินเชื่อ · ค่าคอมร้าน · PPI · CHUBB</p>
+  </div>
+</header>
+
 <main class="wrap">
+
 <nav class="tabs" aria-label="เลือกเครื่องคำนวณ">
-<button class="active" data-tab="loan">สินเชื่อ</button>
-<button data-tab="commission">ค่าคอมร้าน</button>
-<button data-tab="ppi">ประกัน PPI</button>
-<button data-tab="chubb">เงินเพิ่มพิเศษ CHUBB</button>
+  <button class="active" data-tab="loan">สินเชื่อ</button>
+  <button data-tab="commission">ค่าคอมร้าน</button>
+  <button data-tab="ppi">ประกัน PPI</button>
+  <button data-tab="chubb">เงินเพิ่มพิเศษ CHUBB</button>
 </nav>
+
 <section class="panel" id="loan">
-<h2>ค่างวดสินเชื่อ</h2>
-<label for="loan-principal">ยอดจัด (บาท)</label><input id="loan-principal" inputmode="numeric" autocomplete="off" value="100,000">
-<label for="loan-rate">ดอกเบี้ยต่อปี (%)</label><input id="loan-rate" type="text" inputmode="decimal" autocomplete="off" value="5.25">
-<label for="loan-years">ระยะเวลาผ่อน (เดือน)</label><select id="loan-years"></select><p class="hint" id="loan-months"></p>
-<div class="result"><small>ค่างวดจริงต่อเดือน</small><strong id="loan-result">—</strong></div><div id="loan-details"></div>
-<div class="actions"><button data-copy="loan">คัดลอกผล</button><button data-clear="loan">ล้างข้อมูล</button></div>
-<p class="hint">Flat Rate · ปัดขึ้นเป็นจำนวนเต็มบาท · ไม่รวมประกันและค่าธรรมเนียม</p>
+  <h2>ค่างวดสินเชื่อ</h2>
+
+  <label for="loan-principal">ยอดจัด (บาท)</label>
+  <input id="loan-principal" inputmode="numeric" autocomplete="off" value="100,000">
+
+  <label for="loan-rate">ดอกเบี้ยต่อปี (%)</label>
+  <input id="loan-rate" type="text" inputmode="decimal" autocomplete="off" value="5.25">
+
+  <label for="loan-years">ระยะเวลาผ่อน (เดือน)</label>
+  <select id="loan-years"></select>
+  <p class="hint" id="loan-months"></p>
+
+  <div class="result">
+    <small>ค่างวดจริงต่อเดือน</small>
+    <strong id="loan-result">—</strong>
+  </div>
+
+  <div id="loan-details"></div>
+
+  <div class="actions">
+    <button data-copy="loan">คัดลอกผล</button>
+    <button data-clear="loan">ล้างข้อมูล</button>
+  </div>
+
+  <p class="hint">Flat Rate · ปัดขึ้นเป็นจำนวนเต็มบาท · ไม่รวมประกันและค่าธรรมเนียม</p>
 </section>
+
 <section class="panel hidden" id="commission">
-<h2>ค่าคอมมิชชันร้านค้า</h2>
-<label for="com-principal">ยอดจัดสินเชื่อ (บาท)</label><input id="com-principal" inputmode="numeric" autocomplete="off" value="100,000">
-<label for="com-rate">ดอกเบี้ยต่อปี (%)</label><input id="com-rate" type="text" inputmode="decimal" autocomplete="off" value="5">
-<label for="com-years">ระยะเวลาผ่อน (เดือน)</label><select id="com-years"></select>
-<div class="result"><small>ค่าคอมมิชชันร้านค้ารวม</small><strong id="commission-result">—</strong></div><div id="commission-details"></div>
-<div class="actions"><button data-copy="commission">คัดลอกผล</button><button data-clear="commission">ล้างข้อมูล</button></div>
-<p class="hint">ค่าคอมร้านคงที่ 8% ของดอกเบี้ยรวม</p>
+  <h2>ค่าคอมมิชชันร้านค้า</h2>
+
+  <label for="com-principal">ยอดจัดสินเชื่อ (บาท)</label>
+  <input id="com-principal" inputmode="numeric" autocomplete="off" value="100,000">
+
+  <label for="com-rate">ดอกเบี้ยต่อปี (%)</label>
+  <input id="com-rate" type="text" inputmode="decimal" autocomplete="off" value="5">
+
+  <label for="com-years">ระยะเวลาผ่อน (เดือน)</label>
+  <select id="com-years"></select>
+
+  <div class="result">
+    <small>ค่าคอมมิชชันร้านค้ารวม</small>
+    <strong id="commission-result">—</strong>
+  </div>
+
+  <div id="commission-details"></div>
+
+  <div class="actions">
+    <button data-copy="commission">คัดลอกผล</button>
+    <button data-clear="commission">ล้างข้อมูล</button>
+  </div>
+
+  <p class="hint">ค่าคอมร้านคงที่ 8% ของดอกเบี้ยรวม</p>
 </section>
+
 <section class="panel hidden" id="ppi">
-<h2>เบี้ยประกัน PPI รายเดือน</h2>
-<label for="ppi-payment">ค่างวดรถ (บาท/เดือน)</label><input id="ppi-payment" inputmode="numeric" autocomplete="off" value="3,000">
-<label for="ppi-sex">เพศผู้เอาประกัน</label><select id="ppi-sex"><option value="male">ชาย</option><option value="female">หญิง</option></select>
-<label for="ppi-age">อายุ (20–65 ปี)</label><input id="ppi-age" type="text" inputmode="numeric" autocomplete="off" value="30">
-<label for="ppi-years">ระยะเวลาสินเชื่อ</label><select id="ppi-years"></select>
-<div class="error" id="ppi-error" role="alert"></div>
-<div class="result"><small>เบี้ยประกันรวมต่อเดือน</small><strong id="ppi-result">—</strong></div><div id="ppi-details"></div>
-<div class="actions"><button data-copy="ppi">คัดลอกผล</button><button data-clear="ppi">ล้างข้อมูล</button></div>
-<div class="note">อัตราเบี้ยตามตารางที่ให้มา ใช้ค่างวดรถเป็นฐาน และปัดเศษเฉพาะยอดรวมสุดท้าย</div>
+  <h2>เบี้ยประกัน PPI รายเดือน</h2>
+
+  <label for="ppi-payment">ค่างวดรถ (บาท/เดือน)</label>
+  <input id="ppi-payment" inputmode="numeric" autocomplete="off" value="3,000">
+
+  <label for="ppi-sex">เพศผู้เอาประกัน</label>
+  <select id="ppi-sex">
+    <option value="male">ชาย</option>
+    <option value="female">หญิง</option>
+  </select>
+
+  <label for="ppi-age">อายุ (20–65 ปี)</label>
+  <input id="ppi-age" type="text" inputmode="numeric" autocomplete="off" value="30">
+
+  <label for="ppi-years">ระยะเวลาสินเชื่อ</label>
+  <select id="ppi-years"></select>
+
+  <div class="error" id="ppi-error" role="alert"></div>
+
+  <div class="result">
+    <small>เบี้ยประกันรวมต่อเดือน</small>
+    <strong id="ppi-result">—</strong>
+  </div>
+
+  <div id="ppi-details"></div>
+
+  <div class="actions">
+    <button data-copy="ppi">คัดลอกผล</button>
+    <button data-clear="ppi">ล้างข้อมูล</button>
+  </div>
+
+  <div class="note">
+    อัตราเบี้ยตามตารางที่ให้มา ใช้ค่างวดรถเป็นฐาน และปัดเศษเฉพาะยอดรวมสุดท้าย
+  </div>
 </section>
+
 <section class="panel hidden" id="chubb">
-<h2>เงินเพิ่มพิเศษประกัน PPI · CHUBB</h2>
-<label for="chubb-payment">ค่างวดรถต่อเดือน (บาท)</label><input id="chubb-payment" inputmode="numeric" autocomplete="off" value="4,000"><p class="hint">ไม่รวมเบี้ยประกัน PPI</p>
-<label for="chubb-months">จำนวนงวดผ่อนชำระ (เดือน)</label><input id="chubb-months" inputmode="numeric" autocomplete="off" value="36"><p class="hint">จับคู่ตรงกับ 12, 24, 36, 48, 60 หรือ 72 เดือนเท่านั้น</p>
-<label for="chubb-sex">เพศผู้เอาประกันภัย</label><div class="segmented"><label><input type="radio" name="chubb-sex" value="male" checked>ชาย</label><label><input type="radio" name="chubb-sex" value="female">หญิง</label></div>
-<label for="chubb-age">อายุผู้เอาประกันภัย (20–65 ปี)</label><input id="chubb-age" inputmode="numeric" autocomplete="off" value="30">
-<label>ประเภทอุบัติเหตุ</label><div class="segmented"><label><input type="radio" name="chubb-type" value="general" checked>ทั่วไป</label><label><input type="radio" name="chubb-type" value="public">สาธารณะ</label></div>
-<div class="error" id="chubb-error" role="alert"></div>
-<div class="result chubb-result"><small>เงินเพิ่มพิเศษตามประเภทที่เลือก</small><strong id="chubb-result">—</strong></div>
-<div id="chubb-details"></div>
-<div class="actions"><button data-copy="chubb">คัดลอกผล</button><button data-clear="chubb">ล้างข้อมูล</button></div>
-<div class="note">เงินเพิ่มพิเศษเป็นผลประโยชน์เพิ่มเติม ไม่ใช่เบี้ยประกันหรือจำนวนสินไหมที่ยืนยันว่าจะได้รับ ทุนประกันเริ่มต้น = ค่างวดรถ × จำนวนงวด เป็นเพียงสมมติฐานเบื้องต้น ต้องตรวจสอบทุนประกันตามกรมธรรม์จริง ค่ารักษาพยาบาลจ่ายตามค่าใช้จ่ายจริงไม่เกินวงเงินต่ออุบัติเหตุ และการจ่ายเงินรวมถึงผู้รับผลประโยชน์ขึ้นอยู่กับเงื่อนไขกรมธรรม์ เอกสารประชาสัมพันธ์ระบุช่วงโครงการ 31 พ.ค.–31 ธ.ค. 2569 โปรดตรวจสอบสิทธิก่อนใช้งาน</div>
+  <h2>เงินเพิ่มพิเศษประกัน PPI · CHUBB</h2>
+
+  <label for="chubb-payment">ค่างวดรถต่อเดือน (บาท)</label>
+  <input id="chubb-payment" inputmode="numeric" autocomplete="off" value="4,000">
+  <p class="hint">ไม่รวมเบี้ยประกัน PPI</p>
+
+  <label for="chubb-months">จำนวนงวดผ่อนชำระ (เดือน)</label>
+  <input id="chubb-months" inputmode="numeric" autocomplete="off" value="36">
+  <p class="hint">
+    รองรับ 12, 18, 24, 36, 48, 60 และ 72 งวด
+    (18 งวดใช้ตารางประกัน 2 ปี)
+  </p>
+
+  <label>เพศผู้เอาประกันภัย</label>
+  <div class="segmented">
+    <label>
+      <input type="radio" name="chubb-sex" value="male" checked>
+      ชาย
+    </label>
+    <label>
+      <input type="radio" name="chubb-sex" value="female">
+      หญิง
+    </label>
+  </div>
+
+  <label for="chubb-age">อายุผู้เอาประกันภัย (20–65 ปี)</label>
+  <input id="chubb-age" inputmode="numeric" autocomplete="off" value="30">
+
+  <label>ประเภทอุบัติเหตุ</label>
+  <div class="segmented">
+    <label>
+      <input type="radio" name="chubb-type" value="general" checked>
+      ทั่วไป
+    </label>
+    <label>
+      <input type="radio" name="chubb-type" value="public">
+      สาธารณะ
+    </label>
+  </div>
+
+  <div class="error" id="chubb-error" role="alert"></div>
+
+  <div class="result chubb-result">
+    <small>เงินเพิ่มพิเศษตามประเภทที่เลือก</small>
+    <strong id="chubb-result">—</strong>
+  </div>
+
+  <div id="chubb-details"></div>
+
+  <div class="actions">
+    <button data-copy="chubb">คัดลอกผล</button>
+    <button data-clear="chubb">ล้างข้อมูล</button>
+  </div>
+
+  <div class="note">
+    เงินเพิ่มพิเศษเป็นผลประโยชน์เพิ่มเติม ไม่ใช่เบี้ยประกันหรือจำนวนสินไหมที่ยืนยันว่าจะได้รับ
+    ทุนประกันเริ่มต้น = ค่างวดรถ × จำนวนงวด เป็นสมมติฐานเบื้องต้น
+    ต้องตรวจสอบทุนประกันตามกรมธรรม์จริง
+    ค่ารักษาพยาบาลจ่ายตามค่าใช้จ่ายจริงไม่เกินวงเงินต่ออุบัติเหตุ
+    การจ่ายเงินและผู้รับผลประโยชน์ขึ้นอยู่กับเงื่อนไขกรมธรรม์
+    เอกสารประชาสัมพันธ์ระบุช่วงโครงการ 31 พ.ค.–31 ธ.ค. 2569
+    โปรดตรวจสอบสิทธิก่อนใช้งาน
+  </div>
 </section>
-<footer>ผลลัพธ์เป็นการคำนวณตามสูตรที่กำหนด โปรดตรวจสอบเงื่อนไขสินเชื่อและกรมธรรม์จริงก่อนนำเสนอแก่ลูกค้า ข้อมูลที่กรอกใช้คำนวณในเบราว์เซอร์ ไม่ได้ส่งไปยังเซิร์ฟเวอร์โดยโค้ดเครื่องคำนวณนี้</footer>
+
+<footer>
+  ผลลัพธ์เป็นการคำนวณตามสูตรที่กำหนด
+  โปรดตรวจสอบเงื่อนไขสินเชื่อและกรมธรรม์จริงก่อนนำเสนอแก่ลูกค้า
+  ข้อมูลที่กรอกใช้คำนวณในเบราว์เซอร์
+  ไม่ได้ส่งไปยังเซิร์ฟเวอร์โดยโค้ดเครื่องคำนวณนี้
+</footer>
+
 </main>
-<script src="app.js?v=chubb-v1" defer></script>
-</body></html>
+
+<script src="app.js?v=chubb-18-v2" defer></script>
+</body>
+</html>
