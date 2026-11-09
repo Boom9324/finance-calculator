@@ -122,8 +122,6 @@ function makeConfirmation(){
   const ageStr=get('loan-ppi-age');
   const ppi=enabled&&/^\d+$/.test(ageStr)?ppiPremium(car,get('loan-ppi-sex'),Number(ageStr),months):null;
   if(enabled&&!ppi)return '';
-  const date=get('loan-first-date');
-  const dateText=date?(()=>{const [y,m,d]=date.split('-');return `${d}/${m}/${Number(y)+543}`;})():'ยังไม่ระบุ (โปรดยืนยันก่อนส่ง)';
   const payment=ppi?ppi.rounded:0;
   const sex=get('loan-ppi-sex')==='male'?'ชาย':'หญิง';
   const parts=[
@@ -137,8 +135,6 @@ function makeConfirmation(){
     `ค่างวดรถ: ${fmt(car,0)} บาท/เดือน`,
     `ค่างวด PPI: ${ppi?fmt(payment,0)+' บาท/เดือน':'ไม่ได้เลือกทำ PPI'}`,
     `ยอดรวมชำระต่อเดือน: ${fmt(car+payment,0)} บาท`,
-    `วันชำระประจำเดือน: ${date?Number(date.split('-')[2])+' ของทุกเดือน':'ยังไม่ระบุ'}`,
-    `วันชำระงวดแรก: ${dateText}`,
     '',
     'สามารถตรวจสอบรายละเอียดผ่านแอปพลิเคชันกรุงศรี ออโต้ และชำระเงินผ่านแอปพลิเคชันธนาคารกรุงศรี ได้เลยนะครับ',
     '',
